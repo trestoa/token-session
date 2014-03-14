@@ -250,22 +250,6 @@ function session(options){
         : rawCookie;
     }
 
-    // set-cookie
-    var writeHead = res.writeHead;
-    res.writeHead = function(){
-      if (!req.session) {
-        debug('no session');
-        writeHead.apply(res, arguments);
-        return;
-      }
-
-      var val = 's:' + signature.sign(req.sessionID, secret);
-      val = cookie.serialize(key, val);
-      debug('set-cookie %s', val);
-      res.setHeader('Set-Cookie', val);
-      writeHead.apply(res, arguments);
-    };
-
     // proxy end() to commit the session
     var end = res.end;
     res.end = function(data, encoding){
