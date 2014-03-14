@@ -2,6 +2,7 @@
  * Connect - session
  * Copyright(c) 2010 Sencha Inc.
  * Copyright(c) 2011 TJ Holowaychuk
+ * Copyright(c) 2014 Markus Klein
  * MIT Licensed
  */
 
@@ -38,6 +39,10 @@ exports.Store = Store;
 exports.Cookie = Cookie;
 exports.Session = Session;
 exports.MemoryStore = MemoryStore;
+
+exports.createSession = function(){
+	
+}
 
 /**
  * Warning message for `MemoryStore` usage in production.
@@ -189,10 +194,8 @@ function session(options){
   var options = options || {}
     , key = options.key || 'connect.sid'
     , store = options.store || new MemoryStore
-    , cookie = options.cookie || {}
-    , trustProxy = options.proxy
-    , storeReady = true
-    , rollingSessions = options.rolling || false;
+    , storeReady = true,
+	, logger = option.logger;
 
   // notify user that this store is not
   // meant for a production environment
@@ -254,37 +257,6 @@ function session(options){
         debug('no session');
         writeHead.apply(res, arguments);
         return;
-      }
-
-      var cookie = req.session.cookie
-        , proto = (req.headers['x-forwarded-proto'] || '').split(',')[0].toLowerCase().trim()
-        , tls = req.connection.encrypted || (trustProxy && 'https' == proto)
-        , isNew = unsignedCookie != req.sessionID;
-
-      // only send secure cookies via https
-      if (cookie.secure && !tls) {
-        debug('not secured');
-        writeHead.apply(res, arguments);
-        return;
-      }
-
-      // in case of rolling session, always reset the cookie
-      if (!rollingSessions) {
-
-        // browser-session length cookie
-        if (null == cookie.expires) {
-          if (!isNew) {
-            debug('already set browser-session cookie');
-            writeHead.apply(res, arguments);
-            return
-          }
-        // compare hashes and ids
-        } else if (originalHash == hash(req.session) && originalId == req.session.id) {
-          debug('unmodified session');
-          writeHead.apply(res, arguments);
-          return
-        }
-
       }
 
       var val = 's:' + signature.sign(req.sessionID, secret);
