@@ -14,7 +14,6 @@ var uid = require('uid2')
   , crc32 = require('buffer-crc32')
   , parse = require('url').parse
   , signature = require('cookie-signature')
-  , debug = require('debug')('session')
 
 var Session = require('./session/session')
   , MemoryStore = require('./session/memory')
@@ -40,8 +39,9 @@ exports.Cookie = Cookie;
 exports.Session = Session;
 exports.MemoryStore = MemoryStore;
 
-exports.createSession = function(){
-	
+exports.createSession = function(req){
+	req.sessionToken = uid(40);
+	req.session = new Session(req);
 }
 
 /**
@@ -199,16 +199,9 @@ function session(options){
 
   // notify user that this store is not
   // meant for a production environment
-  if ('production' == env && store instanceof MemoryStore) {
-    console.warn(warning);
+  if ('production' == env && store instanceof MemoryStore && logger) {
+    logger.warn(warning);
   }
-
-  // generates the new session
-  store.generate = function(req){
-    req.sessionID = uid(24);
-    req.session = new Session(req);
-    req.session.cookie = new Cookie(cookie);
-  };
 
   store.on('disconnect', function(){ storeReady = false; });
   store.on('connect', function(){ storeReady = true; });
@@ -219,105 +212,53 @@ function session(options){
 
     // Handle connection as if there is no session if
     // the store has temporarily disconnected etc
-    if (!storeReady) return debug('store is disconnected'), next();
-
-    // pathname mismatch
-    var originalPath = parse(req.originalUrl).pathname;
-    if (0 != originalPath.indexOf(cookie.path || '/')) return next();
-
-    // backwards compatibility for signed cookies
-    // req.secret is passed from the cookie parser middleware
-    var secret = options.secret || req.secret;
-
-    // ensure secret is available or bail
-    if (!secret) throw new Error('`secret` option required for sessions');
-
-    var originalHash
-      , originalId;
+    if (!storeReady && logger) return logger.error('store is disconnected'), next();
 
     // expose store
     req.sessionStore = store;
-
-    // grab the session cookie value and check the signature
-    var rawCookie = req.cookies[key];
-
-    // get signedCookies for backwards compat with signed cookies
-    var unsignedCookie = req.signedCookies[key];
-
-    if (!unsignedCookie && rawCookie) {
-      unsignedCookie = (0 == rawCookie.indexOf('s:'))
-        ? signature.unsign(rawCookie.slice(2), secret)
-        : rawCookie;
-    }
 
     // proxy end() to commit the session
     var end = res.end;
     res.end = function(data, encoding){
       res.end = end;
       if (!req.session) return res.end(data, encoding);
-      debug('saving');
       req.session.resetMaxAge();
       req.session.save(function(err){
         if (err) console.error(err.stack);
-        debug('saved');
         res.end(data, encoding);
       });
     };
 
-    // generate the session
-    function generate() {
-      store.generate(req);
-    }
-
     // get the session token from the request body	
 	req.sessionToken = req.body.token;
 
-    // generate a session if the browser doesn't send a sessionID
-    if (!req.sessionID) {
-      debug('no SID sent, generating session');
-      generate();
+    // do not load a session if no session token
+    if (!req.sessionToken) {
       next();
       return;
     }
 
     // generate the session object
-    debug('fetching %s', req.sessionID);
-    store.get(req.sessionID, function(err, sess){
+//    debug('fetching %s', req.sessionID);
+    store.get(req.sessionToken, function(err, sess){
       // error handling
       if (err) {
-        debug('error %j', err);
+        if(logger) logger.error(err);
         if ('ENOENT' == err.code) {
-          generate();
           next();
         } else {
           next(err);
         }
       // no session
       } else if (!sess) {
-        debug('no session found');
-        generate();
+//		if(logger) logger.info('no session found');
         next();
       // populate req.session
       } else {
-        debug('session found');
+//		if(logger) logger.info('no session found');
         store.createSession(req, sess);
         next();
       }
     });
   };
 };
-
-/**
- * Hash the given `sess` object omitting changes
- * to `.cookie`.
- *
- * @param {Object} sess
- * @return {String}
- * @api private
- */
-
-function hash(sess) {
-  return crc32.signed(JSON.stringify(sess, function(key, val){
-    if ('cookie' != key) return val;
-  }));
-}
