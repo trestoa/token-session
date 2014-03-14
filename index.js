@@ -269,8 +269,8 @@ function session(options){
       store.generate(req);
     }
 
-    // get the sessionID from the cookie
-    req.sessionID = unsignedCookie;
+    // get the session token from the request body	
+	req.sessionToken = req.body.token;
 
     // generate a session if the browser doesn't send a sessionID
     if (!req.sessionID) {
@@ -301,8 +301,6 @@ function session(options){
       } else {
         debug('session found');
         store.createSession(req, sess);
-        originalId = req.sessionID;
-        originalHash = hash(sess);
         next();
       }
     });
