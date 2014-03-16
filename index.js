@@ -39,9 +39,10 @@ exports.Cookie = Cookie;
 exports.Session = Session;
 exports.MemoryStore = MemoryStore;
 
-exports.createSession = function(req){
+exports.generateSession = function(req){
 	req.sessionToken = uid(40);
 	req.session = new Session(req);
+	session.maxAge = this.maxAge;
 }
 
 /**
@@ -191,10 +192,10 @@ var warning = 'Warning: connect.session() MemoryStore is not\n'
  */
 
 function session(options){
-  var options = options || {}
-    , key = options.key || 'connect.sid'
+  var options = options || {},
     , store = options.store || new MemoryStore
-    , storeReady = true,
+    , storeReady = true
+	, maxAge = options.maxAge || 86400000
 	, logger = option.logger;
 
   // notify user that this store is not

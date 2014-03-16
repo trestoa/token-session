@@ -22,33 +22,8 @@ var merge = require('utils-merge')
 
 var Session = module.exports = function Session(req, data) {
   Object.defineProperty(this, 'req', { value: req });
-  Object.defineProperty(this, 'id', { value: req.sessionID });
+  Object.defineProperty(this, 'id', { value: req.sessionToken });
   if ('object' == typeof data) merge(this, data);
-};
-
-/**
- * Update reset `.cookie.maxAge` to prevent
- * the cookie from expiring when the
- * session is still active.
- *
- * @return {Session} for chaining
- * @api public
- */
-
-Session.prototype.touch = function(){
-  return this.resetMaxAge();
-};
-
-/**
- * Reset `.maxAge` to `.originalMaxAge`.
- *
- * @return {Session} for chaining
- * @api public
- */
-
-Session.prototype.resetMaxAge = function(){
-  this.cookie.maxAge = this.cookie.originalMaxAge;
-  return this;
 };
 
 /**
@@ -99,18 +74,5 @@ Session.prototype.reload = function(fn){
 Session.prototype.destroy = function(fn){
   delete this.req.session;
   this.req.sessionStore.destroy(this.id, fn);
-  return this;
-};
-
-/**
- * Regenerate this request's session.
- *
- * @param {Function} fn
- * @return {Session} for chaining
- * @api public
- */
-
-Session.prototype.regenerate = function(fn){
-  this.req.sessionStore.regenerate(this.req, fn);
   return this;
 };

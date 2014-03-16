@@ -29,22 +29,6 @@ var Store = module.exports = function Store(options){};
 Store.prototype.__proto__ = EventEmitter.prototype;
 
 /**
- * Re-generate the given requests's session.
- *
- * @param {IncomingRequest} req
- * @return {Function} fn
- * @api public
- */
-
-Store.prototype.regenerate = function(req, fn){
-  var self = this;
-  this.destroy(req.sessionID, function(err){
-    self.generate(req);
-    fn(err);
-  });
-};
-
-/**
  * Load a `Session` instance via the given `sid`
  * and invoke the callback `fn(err, sess)`.
  *
@@ -58,7 +42,7 @@ Store.prototype.load = function(sid, fn){
   this.get(sid, function(err, sess){
     if (err) return fn(err);
     if (!sess) return fn();
-    var req = { sessionID: sid, sessionStore: self };
+    var req = { sessionToken: sid, sessionStore: self };
     sess = self.createSession(req, sess);
     fn(null, sess);
   });
@@ -74,11 +58,6 @@ Store.prototype.load = function(sid, fn){
  */
 
 Store.prototype.createSession = function(req, sess){
-  var expires = sess.cookie.expires
-    , orig = sess.cookie.originalMaxAge;
-  sess.cookie = new Cookie(sess.cookie);
-  if ('string' == typeof expires) sess.cookie.expires = new Date(expires);
-  sess.cookie.originalMaxAge = orig;
   req.session = new Session(req, sess);
   return req.session;
 };
