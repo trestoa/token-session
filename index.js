@@ -39,7 +39,6 @@ exports.MemoryStore = MemoryStore;
 exports.generateSession = function(req){
 	req.sessionToken = uid(40);
 	req.session = new Session(req);
-	session.maxAge = this.maxAge;
 }
 
 /**
@@ -192,7 +191,6 @@ function session(options){
   var options = options || {},
     , store = options.store || new MemoryStore
     , storeReady = true
-	, maxAge = options.maxAge || 86400000
 	, logger = option.logger;
 
   // notify user that this store is not
@@ -220,7 +218,6 @@ function session(options){
     res.end = function(data, encoding){
       res.end = end;
       if (!req.session) return res.end(data, encoding);
-      req.session.resetMaxAge();
       req.session.save(function(err){
         if (err) console.error(err.stack);
         res.end(data, encoding);
