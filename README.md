@@ -1,31 +1,25 @@
-# express-session
+# express-token-session
 
 Setup session store with the given `options`.
 
-Session data is _not_ saved in the cookie itself, however
-cookies are used, so we must use the [cookieParser()](cookieParser.html)
-middleware _before_ `session()`.
+express-token-session is a fork of [express-session](https://github.com/expressjs/session/).
+While [express-session](https://github.com/expressjs/session/) uses cookies for saving the session id
+on the client, express-token-session generates a session token which can be sent to the client manually
+and should be send to the server on every request.
+This means that your request's body MUST be json formated and MUST include a `token` property in the request body.
+
+
 
 ## Example
 
 ```js
- app.use(connect.cookieParser())
- app.use(connect.session({ secret: 'keyboard cat', key: 'sid', cookie: { secure: true }}))
+ app.use(bodyParser)
+ app.use(connect.session()
 ```
 
 **Options**
 
-  - `key` cookie name defaulting to `connect.sid`
   - `store` session store instance
-  - `secret` session cookie is signed with this secret to prevent tampering
-  - `cookie` session cookie settings, defaulting to `{ path: '/', httpOnly: true, maxAge: null }`
-  - `proxy` trust the reverse proxy when setting secure cookies (via "x-forwarded-proto")
-
-**Cookie options**
-
-By default `cookie.maxAge` is `null`, meaning no "expires" parameter is set
-so the cookie becomes a browser-session cookie. When the user closes the
-browser the cookie (and session) will be removed.
 
 ## req.session
 
@@ -50,17 +44,6 @@ app.use(function(req, res, next){
     res.end('welcome to the session demo. refresh!');
   }
 })
-```
-
-## Session#regenerate()
-
-To regenerate the session simply invoke the method, once complete
-a new SID and `Session` instance will be initialized at `req.session`.
-
-```js
-req.session.regenerate(function(err){
-  // will have a new session here
-});
 ```
 
 ## Session#destroy()
@@ -91,41 +74,6 @@ Save the session.
 req.session.save(function(err){
   // session saved
 });
-```
-
-## Session#touch()
-
-Updates the `.maxAge` property. Typically this is
-not necessary to call, as the session middleware does this for you.
-
-## Session#cookie
-
-Each session has a unique cookie object accompany it. This allows
-you to alter the session cookie per visitor. For example we can
-set `req.session.cookie.expires` to `false` to enable the cookie
-to remain for only the duration of the user-agent.
-
-## Session#maxAge
-
-Alternatively `req.session.cookie.maxAge` will return the time
-remaining in milliseconds, which we may also re-assign a new value
-to adjust the `.expires` property appropriately. The following
-are essentially equivalent
-
-```js
-var hour = 3600000;
-req.session.cookie.expires = new Date(Date.now() + hour);
-req.session.cookie.maxAge = hour;
-```
-
-For example when `maxAge` is set to `60000` (one minute), and 30 seconds
-has elapsed it will return `30000` until the current request has completed,
-at which time `req.session.touch()` is called to reset `req.session.maxAge`
-to its original value.
-
-```js
-req.session.cookie.maxAge;
-// => 30000
 ```
 
 ## Session Store Implementation

@@ -3,6 +3,7 @@
  * Connect - session - Session
  * Copyright(c) 2010 Sencha Inc.
  * Copyright(c) 2011 TJ Holowaychuk
+ * Copyright(c) 2014 Markus Klein
  * MIT Licensed
  */
 
