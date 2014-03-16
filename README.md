@@ -35,8 +35,7 @@ app.use(function(req, res, next){
   var sess = req.session;
   if (sess.views) {
     res.setHeader('Content-Type', 'text/html');
-    res.write('<p>views: ' + sess.views + '</p>');
-    res.write('<p>expires in: ' + (sess.cookie.maxAge / 1000) + 's</p>');
+    res.write('<pre>' + sess + '</pre>');
     res.end();
     sess.views++;
   } else {
@@ -48,7 +47,7 @@ app.use(function(req, res, next){
 
 ## Session#destroy()
 
-Destroys the session, removing `req.session`, will be re-generated next request.
+Destroys the session, removing `req.session`.
 
 ```js
 req.session.destroy(function(err){
