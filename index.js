@@ -10,10 +10,7 @@
  * Module dependencies.
  */
 
-var uid = require('uid2')
-  , crc32 = require('buffer-crc32')
-  , parse = require('url').parse
-  , signature = require('cookie-signature')
+var uid = require('uid2');
 
 var Session = require('./session/session')
   , MemoryStore = require('./session/memory')
