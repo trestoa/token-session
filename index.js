@@ -229,18 +229,15 @@ function session(options){
       });
     };
 
-    // get the session token from the request body	
-	req.sessionToken = req.body.token;
-
     // do not load a session if no session token
-    if (!req.sessionToken) {
+    if (!req.body.token) {
       next();
       return;
     }
+	
 
     // generate the session object
-//    debug('fetching %s', req.sessionID);
-    store.get(req.sessionToken, function(err, sess){
+    store.get(req.body.token, function(err, sess){
       // error handling
       if (err) {
         if(logger) logger.error(err);
@@ -251,11 +248,11 @@ function session(options){
         }
       // no session
       } else if (!sess) {
-//		if(logger) logger.info('no session found');
         next();
       // populate req.session
       } else {
-//		if(logger) logger.info('no session found');
+	    // get the session token from the request body	
+	  	req.sessionToken = req.body.token;
         store.createSession(req, sess);
         next();
       }
