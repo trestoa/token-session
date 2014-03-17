@@ -188,7 +188,7 @@ var warning = 'Warning: connect.session() MemoryStore is not\n'
  */
 
 function session(options){
-  var options = options || {},
+  var options = options || {}
     , store = options.store || new MemoryStore()
     , storeReady = true
 	, logger = option.logger;
