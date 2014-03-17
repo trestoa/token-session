@@ -14,7 +14,6 @@ var uid = require('uid2');
 
 var Session = require('./session/session')
   , MemoryStore = require('./session/memory')
-  , Cookie = require('./session/cookie')
   , Store = require('./session/store')
 
 // environment
@@ -32,7 +31,6 @@ exports = module.exports = session;
  */
 
 exports.Store = Store;
-exports.Cookie = Cookie;
 exports.Session = Session;
 exports.MemoryStore = MemoryStore;
 
@@ -191,7 +189,7 @@ function session(options){
   var options = options || {}
     , store = options.store || new MemoryStore()
     , storeReady = true
-	, logger = option.logger;
+    , logger = options.logger;
 
   // notify user that this store is not
   // meant for a production environment

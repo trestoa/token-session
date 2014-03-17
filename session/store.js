@@ -13,7 +13,6 @@
 
 var EventEmitter = require('events').EventEmitter
   , Session = require('./session')
-  , Cookie = require('./cookie');
 
 /**
  * Initialize abstract `Store`.
