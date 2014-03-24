@@ -41,8 +41,7 @@ Session.prototype.save = function(fn){
 };
 
 /**
- * Re-loads the session data _without_ altering
- * the maxAge properties. Invokes the callback `fn(err)`,
+ * Re-loads the session data. Invokes the callback `fn(err)`,
  * after which time if no exception has occurred the
  * `req.session` property will be a new `Session` object,
  * although representing the same session.

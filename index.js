@@ -52,29 +52,17 @@ var warning = 'Warning: connect.session() MemoryStore is not\n'
  *
  *   Setup session store with the given `options`.
  *
- *   Session data is _not_ saved in the cookie itself, however
- *   cookies are used, so we must use the [cookieParser()](cookieParser.html)
- *   middleware _before_ `session()`.
  *
  * Examples:
  *
  *     connect()
- *       .use(connect.cookieParser())
- *       .use(connect.session({ secret: 'keyboard cat', key: 'sid', cookie: { secure: true }}))
+ *       .use(connect.json())
+ *       .use(connect.session()
  *
  * Options:
  *
- *   - `key` cookie name defaulting to `connect.sid`
  *   - `store` session store instance
- *   - `secret` session cookie is signed with this secret to prevent tampering
- *   - `cookie` session cookie settings, defaulting to `{ path: '/', httpOnly: true, maxAge: null }`
- *   - `proxy` trust the reverse proxy when setting secure cookies (via "x-forwarded-proto")
- *
- * Cookie option:
- *
- *  By default `cookie.maxAge` is `null`, meaning no "expires" parameter is set
- *  so the cookie becomes a browser-session cookie. When the user closes the
- *  browser the cookie (and session) will be removed.
+ *	 - `logger` optional logger provided by [log4js-node](https://github.com/nomiddlename/log4js-node)
  *
  * ## req.session
  *
@@ -84,14 +72,13 @@ var warning = 'Warning: connect.session() MemoryStore is not\n'
  *
  *       connect()
  *         .use(connect.favicon())
- *         .use(connect.cookieParser())
- *         .use(connect.session({ secret: 'keyboard cat', cookie: { maxAge: 60000 }}))
+ *         .use(connect.json())
+ *         .use(connect.session()
  *         .use(function(req, res, next){
  *           var sess = req.session;
  *           if (sess.views) {
  *             res.setHeader('Content-Type', 'text/html');
  *             res.write('<p>views: ' + sess.views + '</p>');
- *             res.write('<p>expires in: ' + (sess.cookie.maxAge / 1000) + 's</p>');
  *             res.end();
  *             sess.views++;
  *           } else {
@@ -101,18 +88,9 @@ var warning = 'Warning: connect.session() MemoryStore is not\n'
  *         }
  *       )).listen(3000);
  *
- * ## Session#regenerate()
- *
- *  To regenerate the session simply invoke the method, once complete
- *  a new SID and `Session` instance will be initialized at `req.session`.
- *
- *      req.session.regenerate(function(err){
- *        // will have a new session here
- *      });
- *
  * ## Session#destroy()
  *
- *  Destroys the session, removing `req.session`, will be re-generated next request.
+ *  Destroys the session, removes `req.session`.
  *
  *      req.session.destroy(function(err){
  *        // cannot access session here
@@ -146,25 +124,6 @@ var warning = 'Warning: connect.session() MemoryStore is not\n'
  *  set `req.session.cookie.expires` to `false` to enable the cookie
  *  to remain for only the duration of the user-agent.
  *
- * ## Session#maxAge
- *
- *  Alternatively `req.session.cookie.maxAge` will return the time
- *  remaining in milliseconds, which we may also re-assign a new value
- *  to adjust the `.expires` property appropriately. The following
- *  are essentially equivalent
- *
- *     var hour = 3600000;
- *     req.session.cookie.expires = new Date(Date.now() + hour);
- *     req.session.cookie.maxAge = hour;
- *
- * For example when `maxAge` is set to `60000` (one minute), and 30 seconds
- * has elapsed it will return `30000` until the current request has completed,
- * at which time `req.session.touch()` is called to reset `req.session.maxAge`
- * to its original value.
- *
- *     req.session.cookie.maxAge;
- *     // => 30000
- *
  * Session Store Implementation:
  *
  * Every session store _must_ implement the following methods
@@ -178,7 +137,7 @@ var warning = 'Warning: connect.session() MemoryStore is not\n'
  *    - `.length(callback)`
  *    - `.clear(callback)`
  *
- * For an example implementation view the [connect-redis](http://github.com/visionmedia/connect-redis) repo.
+ * For an example implementation view the [token-session-redis](http://github.com/kleiinnn/token-session-redis) repo.
  *
  * @param {Object} options
  * @return {Function}
