@@ -8,13 +8,14 @@
  */
 
 /**
- * Module dependencies.
+ * Mod ule dependencies.
  */
 
 var Store = require('./store');
 
 /**
  * Initialize a new `MemoryStore`.
+ * This session store implementation is ONLY meant for testing and should never be used in production.
  *
  * @api public
  */
@@ -44,14 +45,7 @@ MemoryStore.prototype.get = function(sid, fn){
       , sess = self.sessions[sid];
     if (sess) {
       sess = JSON.parse(sess);
-      expires = 'string' == typeof sess.cookie.expires
-        ? new Date(sess.cookie.expires)
-        : sess.cookie.expires;
-      if (!expires || new Date < expires) {
-        fn(null, sess);
-      } else {
-        self.destroy(sid, fn);
-      }
+      fn(null, sess);
     } else {
       fn();
     }
