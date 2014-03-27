@@ -104,29 +104,20 @@ Setup session store with the given `options`.
   
 # Session#touch()
   
-```js
-Updates the `.maxAge` property. Typically this is
-not necessary to call, as the session middleware does this for you.
-```
-
+  Updates the `.maxAge` property. Typically this is
+  not necessary to call, as the session middleware does this for you.
   
   Session Store Implementation:
   
   Every session store _must_ implement the following methods
   
-```js
- - `.get(sid, callback)`
- - `.set(sid, session, callback)`
- - `.destroy(sid, callback)`
-```
-
+  - `.get(sid, callback)`
+  - `.set(sid, session, callback)`
+  - `.destroy(sid, callback)`
   
   Recommended methods include, but are not limited to:
   
-```js
- - `.length(callback)`
- - `.clear(callback)`
-```
-
+  - `.length(callback)`
+  - `.clear(callback)`
   
   For an example implementation view the [token-session-redis](http://github.com/kleiinnn/token-session-redis) repo.
