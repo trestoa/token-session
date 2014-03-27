@@ -117,13 +117,6 @@ var warning = 'Warning: connect.session() MemoryStore is not\n'
  *   Updates the `.maxAge` property. Typically this is
  *   not necessary to call, as the session middleware does this for you.
  *
- * ## Session#cookie
- *
- *  Each session has a unique cookie object accompany it. This allows
- *  you to alter the session cookie per visitor. For example we can
- *  set `req.session.cookie.expires` to `false` to enable the cookie
- *  to remain for only the duration of the user-agent.
- *
  * Session Store Implementation:
  *
  * Every session store _must_ implement the following methods
