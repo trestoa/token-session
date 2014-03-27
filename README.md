@@ -1,89 +1,140 @@
-# express-token-session
+  - [exports.Store](#exportsstore)
+  - [warning](#warning)
+  - [session()](#session)
+  - [req.session](#reqsession)
+  - [Session#destroy()](#sessiondestroy)
+  - [Session#reload()](#sessionreload)
+  - [Session#save()](#sessionsave)
+  - [Session#touch()](#sessiontouch)
+  - [Session#cookie](#sessioncookie)
 
+## exports.Store
+
+  Expose constructors.
+
+## warning
+
+  Warning message for `MemoryStore` usage in production.
+
+## session()
+
+  Session:
+  
+```js
 Setup session store with the given `options`.
-
-express-token-session is a fork of [express-session](https://github.com/expressjs/session/).
-While [express-session](https://github.com/expressjs/session/) uses cookies for saving the session id
-on the client, express-token-session generates a session token which can be sent to the client manually
-and should be send to the server on every request.
-This means that your request's body MUST be json formated and MUST include a `token` property in the request body.
-
-
-
-## Example
-
-```js
- app.use(bodyParser)
- app.use(connect.session()
 ```
 
-**Options**
-
-  - `store` session store instance
-
-## req.session
-
-To store or access session data, simply use the request property `req.session`,
-which is (generally) serialized as JSON by the store, so nested objects
-are typically fine. For example below is a user-specific view counter:
-
+  
+  
+  Examples:
+  
 ```js
-app.use(cookieParser())
-app.use(session({ secret: 'keyboard cat', cookie: { maxAge: 60000 }}))
-
-app.use(function(req, res, next){
-  var sess = req.session;
-  if (sess.views) {
-    res.setHeader('Content-Type', 'text/html');
-    res.write('<pre>' + sess + '</pre>');
-    res.end();
-    sess.views++;
-  } else {
-    sess.views = 1;
-    res.end('welcome to the session demo. refresh!');
-  }
-})
+  connect()
+    .use(connect.json())
+    .use(connect.session()
 ```
 
-## Session#destroy()
-
-Destroys the session, removing `req.session`.
-
+  
+  Options:
+  
 ```js
-req.session.destroy(function(err){
-  // cannot access session here
-});
+- `store` session store instance
 ```
 
-## Session#reload()
-
-Reloads the session data.
-
+  	 - `logger` optional logger provided by [log4js-node](https://github.com/nomiddlename/log4js-node)
+  
+# req.session
+  
+   To store or access session data, simply use the request property `req.session`,
+   which is (generally) serialized as JSON by the store, so nested objects
+   are typically fine. For example below is a user-specific view counter:
+  
 ```js
-req.session.reload(function(err){
-  // session updated
-});
+    connect()
+      .use(connect.favicon())
+      .use(connect.json())
+      .use(connect.session()
+      .use(function(req, res, next){
+        var sess = req.session;
+        if (sess.views) {
+          res.setHeader('Content-Type', 'text/html');
+          res.write('<p>views: ' + sess.views + '</p>');
+          res.end();
+          sess.views++;
+        } else {
+          sess.views = 1;
+          res.end('welcome to the session demo. refresh!');
+        }
+      }
+    )).listen(3000);
 ```
 
-## Session#save()
-
-Save the session.
-
+  
+# Session#destroy()
+  
+   Destroys the session, removes `req.session`.
+  
 ```js
-req.session.save(function(err){
-  // session saved
-});
+   req.session.destroy(function(err){
+     // cannot access session here
+   });
 ```
 
-## Session Store Implementation
+  
+# Session#reload()
+  
+   Reloads the session data.
+  
+```js
+   req.session.reload(function(err){
+     // session updated
+   });
+```
 
-Every session store _must_ implement the following methods
+  
+# Session#save()
+  
+   Save the session.
+  
+```js
+   req.session.save(function(err){
+     // session saved
+   });
+```
 
-   - `.get(sid, callback)`
-   - `.set(sid, session, callback)`
-   - `.destroy(sid, callback)`
+  
+# Session#touch()
+  
+```js
+Updates the `.maxAge` property. Typically this is
+not necessary to call, as the session middleware does this for you.
+```
 
-Recommended methods include, but are not limited to:
+  
+# Session#cookie
+  
+   Each session has a unique cookie object accompany it. This allows
+   you to alter the session cookie per visitor. For example we can
+   set `req.session.cookie.expires` to `false` to enable the cookie
+   to remain for only the duration of the user-agent.
+  
+  Session Store Implementation:
+  
+  Every session store _must_ implement the following methods
+  
+```js
+ - `.get(sid, callback)`
+ - `.set(sid, session, callback)`
+ - `.destroy(sid, callback)`
+```
 
-   - `.length(callback)`
-   - `.clear(callback)`
+  
+  Recommended methods include, but are not limited to:
+  
+```js
+ - `.length(callback)`
+ - `.clear(callback)`
+```
+
+  
+  For an example implementation view the [token-session-redis](http://github.com/kleiinnn/token-session-redis) repo.
