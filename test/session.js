@@ -1,30 +1,20 @@
 
 var connect = require('connect')
+  , express = require('express')
   , assert = require('assert')
   , request = require('supertest')
   , should = require('should')
-  , cookieParser = require('cookie-parser')
   , session = require('../')
 
-var min = 60 * 1000;
 
 function respond(req, res) {
   res.end();
 }
 
-function sid(res) {
-  var val = res.headers['set-cookie'];
-  if (!val) return '';
-  return /^connect\.sid=([^;]+);/.exec(val[0])[1];
-}
-
-function expires(res) {
-  return res.headers['set-cookie'][0].match(/Expires=([^;]+)/)[1];
-}
+var TOKEN_KEY = 'token';
 
 var app = connect()
-  .use(cookieParser())
-  .use(session({ secret: 'keyboard cat', cookie: { maxAge: min }}))
+  .use(session({ key: TOKEN_KEY }))
   .use(respond);
 
 describe('session()', function(){
@@ -32,255 +22,87 @@ describe('session()', function(){
     session.Session.should.be.a.Function;
     session.Store.should.be.a.Function;
     session.MemoryStore.should.be.a.Function;
-  })
-
-  describe('proxy option', function(){
-    describe('when enabled', function(){
-      it('should trust X-Forwarded-Proto when string', function(done){
-        var app = connect()
-          .use(cookieParser())
-          .use(session({ secret: 'keyboard cat', proxy: true, cookie: { secure: true, maxAge: 5 }}))
-          .use(respond);
-
-        request(app)
-        .get('/')
-        .set('X-Forwarded-Proto', 'https')
-        .end(function(err, res){
-          res.headers.should.have.property('set-cookie');
-          done();
-        });
-      })
-
-      it('should trust X-Forwarded-Proto when comma-separated list', function(done){
-        var app = connect()
-          .use(cookieParser())
-          .use(session({ secret: 'keyboard cat', proxy: true, cookie: { secure: true, maxAge: 5 }}))
-          .use(respond);
-
-        request(app)
-        .get('/')
-        .set('X-Forwarded-Proto', 'https,http')
-        .end(function(err, res){
-          res.headers.should.have.property('set-cookie');
-          done();
-        });
-      })
-    })
-
-    describe('when disabled', function(){
-      it('should not trust X-Forwarded-Proto', function(done){
-        var app = connect()
-          .use(cookieParser())
-          .use(session({ secret: 'keyboard cat', cookie: { secure: true, maxAge: min }}))
-          .use(respond);
-
-        request(app)
-        .get('/')
-        .set('X-Forwarded-Proto', 'https')
-        .end(function(err, res){
-          res.headers.should.not.have.property('set-cookie');
-          done();
-        });
-      })
-    })
-  })
-
-  describe('key option', function(){
-    it('should default to "connect.sid"', function(done){
-      request(app)
-      .get('/')
-      .end(function(err, res){
-        res.headers['set-cookie'].should.have.length(1);
-        res.headers['set-cookie'][0].should.match(/^connect\.sid/);
-        done();
-      });
-    })
-
-    it('should allow overriding', function(done){
-      var app = connect()
-        .use(cookieParser())
-        .use(session({ secret: 'keyboard cat', key: 'sid', cookie: { maxAge: min }}))
-        .use(respond);
-
-      request(app)
-      .get('/')
-      .end(function(err, res){
-        res.headers['set-cookie'].should.have.length(1);
-        res.headers['set-cookie'][0].should.match(/^sid/);
-        done();
-      });
-    })
-  })
-
-  it('should retain the sid', function(done){
-    var n = 0;
-
-    var app = connect()
-      .use(cookieParser())
-      .use(session({ secret: 'keyboard cat', cookie: { maxAge: min }}))
-      .use(function(req, res){
-        req.session.count = ++n;
-        res.end();
-      })
-
-    request(app)
-    .get('/')
-    .end(function(err, res){
-
-      var id = sid(res);
-      request(app)
-      .get('/')
-      .set('Cookie', 'connect.sid=' + id)
-      .end(function(err, res){
-        sid(res).should.equal(id);
-        done();
-      });
-    });
-  })
-
-  describe('when an invalid sid is given', function(){
-    it('should generate a new one', function(done){
-      request(app)
-      .get('/')
-      .set('Cookie', 'connect.sid=foobarbaz')
-      .end(function(err, res){
-        sid(res).should.not.equal('foobarbaz');
-        done();
-      });
-    })
-  })
-
-  it('should issue separate sids', function(done){
-    var n = 0;
-
-    var app = connect()
-      .use(cookieParser())
-      .use(session({ secret: 'keyboard cat', cookie: { maxAge: min }}))
-      .use(function(req, res){
-        req.session.count = ++n;
-        res.end();
-      })
-
-    request(app)
-    .get('/')
-    .end(function(err, res){
-
-      var id = sid(res);
-      request(app)
-      .get('/')
-      .set('Cookie', 'connect.sid=' + id)
-      .end(function(err, res){
-        sid(res).should.equal(id);
-
-        request(app)
-        .get('/')
-        .end(function(err, res){
-          sid(res).should.not.equal(id);
-          done();
-        });
-      });
-    });
-  })
+  });
 
   describe('req.session', function(){
     it('should persist', function(done){
-      var app = connect()
-        .use(cookieParser())
-        .use(session({ secret: 'keyboard cat', cookie: { maxAge: min, httpOnly: false }}))
-        .use(function(req, res, next){
-          // checks that cookie options persisted
-          req.session.cookie.httpOnly.should.equal(false);
-
+      var app = express()
+        .use(express.json())
+        .use(session({ key: TOKEN_KEY }))
+        .post('/login', function (req, res) {
+          session.generateSession(req);
+          res.end(req.sessionToken);
+        })
+        .post('/count', function (req, res) {
+          if (!req.session) {
+            return res.end('No session found');
+          }
           req.session.count = req.session.count || 0;
           req.session.count++;
-          res.end(req.session.count.toString());
+          res.end(req.session.count.toString());          
         });
 
       request(app)
-      .get('/')
-      .end(function(err, res){
-        res.text.should.equal('1');
-
+      .post('/login')
+      .end(function (err, res) {
+        res.text.should.not.have.lengthOf(0);
+        var p = {};
+        p[TOKEN_KEY] = res.text;
         request(app)
-        .get('/')
-        .set('Cookie', 'connect.sid=' + sid(res))
+        .post('/count')
+        .send(p)
         .end(function(err, res){
-          res.text.should.equal('2');
-          done();
-        });
-      });
-    })
-
-    it('should only set-cookie when modified', function(done){
-      var modify = true;
-
-      var app = connect()
-        .use(cookieParser())
-        .use(session({ secret: 'keyboard cat', cookie: { maxAge: min }}))
-        .use(function(req, res, next){
-          if (modify) {
-            req.session.count = req.session.count || 0;
-            req.session.count++;
-          }
-          res.end(req.session.count.toString());
-        });
-
-      request(app)
-      .get('/')
-      .end(function(err, res){
-        res.text.should.equal('1');
-
-        request(app)
-        .get('/')
-        .set('Cookie', 'connect.sid=' + sid(res))
-        .end(function(err, res){
-          var id = sid(res);
-          res.text.should.equal('2');
-          modify = false;
-
+          res.text.should.equal('1');
           request(app)
-          .get('/')
-          .set('Cookie', 'connect.sid=' + sid(res))
+          .post('/count')
+          .send(p)
           .end(function(err, res){
-            sid(res).should.be.empty;
             res.text.should.equal('2');
-            modify = true;
-
-            request(app)
-            .get('/')
-            .set('Cookie', 'connect.sid=' + id)
-            .end(function(err, res){
-              sid(res).should.not.be.empty;
-              res.text.should.equal('3');
-              done();
-            });
+            done();
           });
         });
       });
-    })
+    });
+    return;
 
     describe('.destroy()', function(){
       it('should destroy the previous session', function(done){
         var app = connect()
-          .use(cookieParser())
-          .use(session({ secret: 'keyboard cat' }))
+          .use(session({ key: TOKEN_KEY }))
           .use(function(req, res, next){
-            req.session.destroy(function(err){
-              if (err) throw err;
-              assert(!req.session, 'req.session after destroy');
-              res.end();
-            });
+            req.session.count = req.session.count || 0;
+            req.session.count++;
+            if (req.session.count <= 2) {
+              res.end(req.session.count.toString());
+            }
+            else {
+              req.session.destroy(function(err){
+                if (err) throw err;
+                assert(!req.session, 'req.session after destroy');
+                res.end('session destroyed');
+              });              
+            }
           });
 
         request(app)
         .get('/')
         .end(function(err, res){
-          res.headers.should.not.have.property('set-cookie');
-          done();
-        });
-      })
-    })
+          res.text.should.equal('1');
+          request(app)
+          .get('/')
+          .end(function(err, res){
+            res.text.should.equal('2');
+              request(app)
+              .get('/')
+              .end(function(err, res){
+                res.text.should.equal('session destroyed');
+                done();
+              });
 
+          });
+        });
+      });
+    });
     describe('.regenerate()', function(){
       it('should destroy/replace the previous session', function(done){
         var app = connect()
