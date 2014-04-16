@@ -30,7 +30,7 @@ describe('session()', function(){
         .use(express.json())
         .use(session({ key: TOKEN_KEY }))
         .post('/login', function (req, res) {
-          session.generateSession(req);
+          session.generate(req, 'thisIsMyToken__');
           res.end(req.sessionToken);
         })
         .post('/count', function (req, res) {
@@ -45,7 +45,7 @@ describe('session()', function(){
       request(app)
       .post('/login')
       .end(function (err, res) {
-        res.text.should.not.have.lengthOf(0);
+        res.text.should.equal('thisIsMyToken__');
         var p = {};
         p[TOKEN_KEY] = res.text;
         request(app)
