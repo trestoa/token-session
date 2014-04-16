@@ -139,6 +139,7 @@ var warning = 'Warning: connect.session() MemoryStore is not\n'
 
 function session(options){
   var options = options || {}
+    , key = options.key || token
     , store = options.store || new MemoryStore()
     , storeReady = true
     , logger = options.logger;
@@ -174,15 +175,16 @@ function session(options){
       });
     };
 
+    var token = req.body[key];
     // do not load a session if no session token
-    if (!req.body.token) {
+    if (!token) {
       next();
       return;
     }
 	
 
     // generate the session object
-    store.get(req.body.token, function(err, sess){
+    store.get(token, function(err, sess){
       // error handling
       if (err) {
         if(logger) logger.error(err);
@@ -196,8 +198,8 @@ function session(options){
         next();
       // populate req.session
       } else {
-	    // get the session token from the request body	
-	  	req.sessionToken = req.body.token;
+  	    // get the session token from the request body	
+  	  	req.sessionToken = token;
         store.createSession(req, sess);
         next();
       }
