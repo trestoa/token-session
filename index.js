@@ -176,7 +176,7 @@ function session(options){
       });
     };
 
-    var token = req.body[key];
+    var token = req.query[key] || req.body[key];
     // do not load a session if no session token
     if (!token) {
       next();
