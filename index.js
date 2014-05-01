@@ -175,14 +175,14 @@ function session(options){
     };
 
     // do not load a session if no session token
-    if (!req.body.token) {
+    if (!req.get('X-AUTH_TOKEN')) {
       next();
       return;
     }
 	
 
     // generate the session object
-    store.get(req.body.token, function(err, sess){
+    store.get(req.get('X-AUTH_TOKEN'), function(err, sess){
       // error handling
       if (err) {
         if(logger) logger.error(err);
@@ -197,7 +197,7 @@ function session(options){
       // populate req.session
       } else {
 	    // get the session token from the request body	
-	  	req.sessionToken = req.body.token;
+	  	req.sessionToken = req.get('X-AUTH_TOKEN');
         store.createSession(req, sess);
         next();
       }
