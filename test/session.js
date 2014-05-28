@@ -11,7 +11,7 @@ function respond(req, res) {
   res.end();
 }
 
-var TOKEN_KEY = 'token';
+var TOKEN_KEY = 'X-AUTH_TOKEN';
 
 var app = connect()
   .use(session({ key: TOKEN_KEY }))
@@ -27,8 +27,7 @@ describe('session()', function (){
   describe('req.session', function (){
     it('should persist', function (done){
       var app = express()
-        .use(express.json())
-        .all('*', session({ key: TOKEN_KEY }))
+        .use(session({ key: TOKEN_KEY }))
         .post('/login', function (req, res) {
           session.generate(req, 'thisIsMyToken__');
           res.end(req.sessionToken);
@@ -39,23 +38,22 @@ describe('session()', function (){
           }
           req.session.count = req.session.count || 0;
           req.session.count++;
-          res.end(req.session.count.toString());          
+          res.end(req.session.count.toString());
         });
 
       request(app)
       .post('/login')
       .end(function (err, res) {
         res.text.should.equal('thisIsMyToken__');
-        var p = {};
-        p[TOKEN_KEY] = res.text;
+        var token = res.text;
         request(app)
         .post('/count')
-        .send(p)
+        .set(TOKEN_KEY, token)
         .end(function (err, res){
           res.text.should.equal('1');
           request(app)
           .post('/count')
-          .send(p)
+          .set(TOKEN_KEY, token)
           .end(function (err, res){
             res.text.should.equal('2');
             done();
@@ -64,7 +62,7 @@ describe('session()', function (){
       });
     });
 
-    it('should be able to retrieve token on URI', function (done) {
+    /*it('should be able to retrieve token on URI', function (done) {
       var app = express()
         .use(express.json())
         .use(session({ key: TOKEN_KEY }))
@@ -89,7 +87,7 @@ describe('session()', function (){
           done();
         });
       });
-    });
+    });*/
 
     describe('.destroy()', function (){
       it('should destroy the previous session', function (done){
@@ -111,7 +109,7 @@ describe('session()', function (){
                 if (err) throw err;
                 assert(!req.session, 'req.session after destroy');
                 res.end('session destroyed');
-              });              
+              });
             }
           });
 
@@ -119,21 +117,20 @@ describe('session()', function (){
         .post('/login')
         .end(function (err, res) {
           res.text.should.equal('thisIsMyToken__');
-          var p = {};
-          p[TOKEN_KEY] = res.text;
+          var token = res.text;
           request(app)
           .post('/test')
-          .send(p)
+          .set(TOKEN_KEY, token)
           .end(function (err, res){
             res.text.should.equal('1');
             request(app)
             .post('/test')
-            .send(p)
+            .set(TOKEN_KEY, token)
             .end(function (err, res){
               res.text.should.equal('2');
                 request(app)
                 .post('/test')
-                .send(p)
+                .set(TOKEN_KEY, token)
                 .end(function (err, res){
                   res.text.should.equal('session destroyed');
                   done();
