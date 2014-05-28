@@ -34,9 +34,10 @@ exports.Store = Store;
 exports.Session = Session;
 exports.MemoryStore = MemoryStore;
 
-exports.generateSession = function(req){
-	req.sessionToken = uid(40);
+exports.generate = function(req, token){
+	req.sessionToken = token || uid(40);
 	req.session = new Session(req);
+  return req.session;
 }
 
 /**
@@ -139,6 +140,7 @@ var warning = 'Warning: connect.session() MemoryStore is not\n'
 
 function session(options){
   var options = options || {}
+    , key = options.key || 'token'
     , store = options.store || new MemoryStore()
     , storeReady = true
     , logger = options.logger;
