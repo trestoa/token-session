@@ -140,7 +140,7 @@ var warning = 'Warning: connect.session() MemoryStore is not\n'
 
 function session(options){
   var options = options || {}
-    , key = options.key || 'token'
+    , key = options.key || 'X-AUTH_TOKEN'
     , store = options.store || new MemoryStore()
     , storeReady = true
     , logger = options.logger;
@@ -175,16 +175,16 @@ function session(options){
         res.end(data, encoding);
       });
     };
-
-    // do not load a session if no session token
-    if (!req.get('X-AUTH_TOKEN')) {
+    var token = req.get(key);
+      // do not load a session if no session token
+    if (!token) {
       next();
       return;
     }
-	
+
 
     // generate the session object
-    store.get(req.get('X-AUTH_TOKEN'), function(err, sess){
+    store.get(token, function(err, sess){
       // error handling
       if (err) {
         if(logger) logger.error(err);
@@ -198,8 +198,8 @@ function session(options){
         next();
       // populate req.session
       } else {
-	    // get the session token from the request body	
-	  	req.sessionToken = req.get('X-AUTH_TOKEN');
+	    // get the session token from the request body
+	  	req.sessionToken = token;
         store.createSession(req, sess);
         next();
       }
