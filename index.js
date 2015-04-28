@@ -169,10 +169,10 @@ function session(options){
     var end = res.end;
     res.end = function(data, encoding){
       res.end = end;
-      if (!req.session || !req.sessionToken) return res.end(data, encoding);
+      if (!req.session || !req.sessionToken) return end.call(res, data, encoding);
       req.session.save(function(err){
         if (err) console.error(err.stack);
-        res.end(data, encoding);
+        end.call(res, data, encoding);
       });
     };
     var token = req.get(key);
